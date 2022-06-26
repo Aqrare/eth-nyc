@@ -26,6 +26,7 @@ import { ItemType, MAX_INT, NO_CONDUIT, OrderType } from "../constants";
 import { abi } from "../lib/abi";
 import config from "../lib/web3/config.json";
 import { injected } from "../lib/web3/injected";
+import { ApprovalAction, CreateOrderAction } from "../types";
 import { Chain, isChain } from "../types/chain";
 
 declare global {
@@ -47,6 +48,7 @@ export const Request: React.FC = () => {
   const [tokenId, setTokenId] = useState("");
   const [tokenId1, setTokenId1] = useState("");
   const [tokenId2, setTokenId2] = useState("");
+  const [cid, setCid] = useState("");
 
   const [contractAddress1, setContractAddress1] = useState("");
   const [contractAddress2, setContractAddress2] = useState("");
@@ -57,7 +59,9 @@ export const Request: React.FC = () => {
   const toast = useToast();
   const rpc = "https://rinkeby.infura.io/v3/95f65ab099894076814e8526f52c9149";
   const provider = new ethers.providers.JsonRpcProvider(rpc);
+  // const provider = ethers.getDefaultProvider() as JsonRPCProvider;
 
+  let seaport = new Seaport(provider);
   const { onCopy } = useClipboard(orderURI);
 
   const { activate, library, account } = useWeb3React<Web3Provider>();
@@ -69,7 +73,6 @@ export const Request: React.FC = () => {
     setNetwork("");
     setOrderURI("");
   };
-
 
   const handleChangeContractAddress1 = (e: any) => {
     const inputValue = e.target.value;
@@ -149,20 +152,28 @@ export const Request: React.FC = () => {
     setTokenType1(inputValue);
   };
 
-
   const ipfs = createClient({
     host: "ipfs.infura.io",
     port: 5001,
     protocol: "https",
   });
 
-  
+  const generateRandomSalt = () => {
+    return `0x${Buffer.from(ethers.utils.randomBytes(16)).toString("hex")}`;
+  };
 
   const createOrder = async () => {
     if (!account || !library) return;
-    const seaport = new Seaport(library);
     console.log(account, "account");
+    console.log(seaport, "seaport")
+    seaport = await new Seaport(library);
+    const startTime = "0";
+    const endTime = MAX_INT.toString();
+    const salt = generateRandomSalt();
     const order = await seaport.createOrder({
+      startTime,
+      endTime,
+      salt,
       offer: [
         {
           itemType: tokenType1,
@@ -182,9 +193,18 @@ export const Request: React.FC = () => {
         },
       ],
     });
-    console.log(order, "order");
+
+    // console.log(actions, "actions");
+    // const approvalAction = actions[0] as any;
+    // console.log(actions[0]);
+    // await approvalAction.transactionMethods.transact();
+    // const createOrderAction = actions[1] as any;
+    // const order = await createOrderAction.createOrder();
+    // console.log(order, "order");
+
     const buffer = Buffer.from(JSON.stringify(order));
     const cid = await ipfs.add(buffer);
+    setCid(cid.path);
     console.log(cid);
   };
 
@@ -193,8 +213,7 @@ export const Request: React.FC = () => {
   };
 
   const sendMessage = async (ownerAddress: string) => {
-    createOrder();
-    console.log("aaaaaaaaa");
+    await createOrder();
     if (!account || !library) {
       console.log("error");
       return;
@@ -209,7 +228,9 @@ export const Request: React.FC = () => {
     const stream = await offererToOwner.streamMessages();
 
     // TODO: Send Link of Seaport
-    await offererToOwner.send("Seaport Link");
+    await offererToOwner.send("New offer !!");
+    const link = "https://otc-swap.vercel.app/fill/" + cid;
+    await offererToOwner.send(link);
 
     const msg = await (await stream.next()).value;
     console.log(msg + "was sent to" + ownerAddress);

@@ -20,7 +20,7 @@ export const Header: React.FC = () => {
       <Flex minH={"64px"} alignItems={"center"} justifyContent={"space-between"} p={{ base: 8 }}>
         <Link href="/">
           <Text fontSize={"lg"} fontWeight={"bold"}>
-            KaguraSwap
+            OTC Swap
           </Text>
         </Link>
         <Flex gap={"16px"}>

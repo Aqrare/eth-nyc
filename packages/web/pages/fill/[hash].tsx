@@ -1,6 +1,8 @@
 import type { NextPage } from "next";
 
+import { Container } from "../../components/Container";
 import { Fulfill } from "../../components/Fulfill";
+import { Layout } from "../../components/Layout";
 
 export async function getServerSideProps() {
   return {
@@ -8,10 +10,14 @@ export async function getServerSideProps() {
   };
 }
 
-
 const XMTP: NextPage = () => {
-  return <Fulfill></Fulfill>;
+  return (
+    <Layout>
+      <Container>
+        <Fulfill></Fulfill>
+      </Container>
+    </Layout>
+  );
 };
-
 
 export default XMTP;
