@@ -55,7 +55,7 @@ export const Request: React.FC = () => {
   const [tokenType2, setTokenType2] = React.useState() as any;
   const [orderURI, setOrderURI] = React.useState("");
   const toast = useToast();
-  const rpc = process.env.RPC;
+  const rpc = "https://rinkeby.infura.io/v3/95f65ab099894076814e8526f52c9149";
   const provider = new ethers.providers.JsonRpcProvider(rpc);
 
   const { onCopy } = useClipboard(orderURI);
@@ -69,6 +69,7 @@ export const Request: React.FC = () => {
     setNetwork("");
     setOrderURI("");
   };
+
 
   const handleChangeContractAddress1 = (e: any) => {
     const inputValue = e.target.value;
