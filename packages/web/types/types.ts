@@ -9,8 +9,8 @@ import {
 } from "ethers";
 
 import { ItemType } from "../constants";
-import type { ERC20 } from "./typechain/ERC20";
-import type { ERC721 } from "./typechain/ERC721";
+// import type { ERC20 } from "./typechain/ERC20";
+// import type { ERC721 } from "./typechain/ERC721";
 
 export type ContractMethodReturnType<
   T extends Contract,
@@ -31,7 +31,7 @@ export type ApprovalAction = {
   identifierOrCriteria: string;
   itemType: ItemType;
   operator: string;
-  transactionMethods:
-    | TransactionMethods<ContractMethodReturnType<ERC721, "setApprovalForAll">>
-    | TransactionMethods<ContractMethodReturnType<ERC20, "approve">>;
+//   transactionMethods:
+//     | TransactionMethods<ContractMethodReturnType<ERC721, "setApprovalForAll">>
+//     | TransactionMethods<ContractMethodReturnType<ERC20, "approve">>;
 };

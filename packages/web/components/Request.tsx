@@ -2,7 +2,6 @@ import { CopyIcon } from "@chakra-ui/icons";
 import {
   Box,
   Button,
-  Flex,
   FormControl,
   FormErrorMessage,
   IconButton,
@@ -18,15 +17,14 @@ import { Web3Provider } from "@ethersproject/providers";
 import { Seaport } from "@opensea/seaport-js";
 import { useWeb3React } from "@web3-react/core";
 import { Client } from "@xmtp/xmtp-js";
-import { BigNumber, ethers } from "ethers";
+import { ethers } from "ethers";
 import createClient from "ipfs-http-client";
 import React, { useState } from "react";
 
-import { ItemType, MAX_INT, NO_CONDUIT, OrderType } from "../constants";
+import { ItemType } from "../constants";
 import { abi } from "../lib/abi";
 import config from "../lib/web3/config.json";
 import { injected } from "../lib/web3/injected";
-import { ApprovalAction, CreateOrderAction } from "../types";
 import { Chain, isChain } from "../types/chain";
 
 declare global {
@@ -41,31 +39,21 @@ export const Request: React.FC = () => {
     "0x5442d67C172e7eE94b755B2E3CA3529805B1c607"
   );
   const [assetURIErrorMessage, setAssetURIErrorMessage] = useState("");
-
   const [network, setNetwork] = useState<Chain | "">("");
-
   const [nftContractAddress, setNFTContractAddress] = useState("");
   const [tokenId, setTokenId] = useState("");
   const [tokenId1, setTokenId1] = useState("");
   const [tokenId2, setTokenId2] = useState("");
-  const [cid, setCid] = useState("");
-
   const [contractAddress1, setContractAddress1] = useState("");
   const [contractAddress2, setContractAddress2] = useState("");
-
   const [tokenType1, setTokenType1] = React.useState() as any;
   const [tokenType2, setTokenType2] = React.useState() as any;
   const [orderURI, setOrderURI] = React.useState("");
-  const toast = useToast();
+    const toast = useToast();
   const rpc = "https://rinkeby.infura.io/v3/95f65ab099894076814e8526f52c9149";
   const provider = new ethers.providers.JsonRpcProvider(rpc);
-  // const provider = ethers.getDefaultProvider() as JsonRPCProvider;
-
-  let seaport = new Seaport(provider);
   const { onCopy } = useClipboard(orderURI);
-
   const { activate, library, account } = useWeb3React<Web3Provider>();
-
   const clear = () => {
     setAssetURI("");
     setNFTContractAddress("");
@@ -118,7 +106,6 @@ export const Request: React.FC = () => {
     setTokenId(tokenId);
     setNetwork(network);
     setOwnerAddress(owner);
-    console.log(owner);
   };
 
   const handleTokenType1 = (e: any) => {
@@ -133,8 +120,6 @@ export const Request: React.FC = () => {
         setTokenType1(ItemType.ERC1155);
         break;
     }
-    const inputValue = e.target.value;
-    setTokenType1(inputValue);
   };
   const handleTokenType2 = (e: any) => {
     switch (e.target.value) {
@@ -148,8 +133,6 @@ export const Request: React.FC = () => {
         setTokenType2(ItemType.ERC1155);
         break;
     }
-    const inputValue = e.target.value;
-    setTokenType1(inputValue);
   };
 
   const ipfs = createClient({
@@ -158,22 +141,18 @@ export const Request: React.FC = () => {
     protocol: "https",
   });
 
-  const generateRandomSalt = () => {
-    return `0x${Buffer.from(ethers.utils.randomBytes(16)).toString("hex")}`;
-  };
-
   const createOrder = async () => {
     if (!account || !library) return;
     console.log(account, "account");
+    const seaport = new Seaport(library);
     console.log(seaport, "seaport")
-    seaport = await new Seaport(library);
-    const startTime = "0";
-    const endTime = MAX_INT.toString();
-    const salt = generateRandomSalt();
-    const order = await seaport.createOrder({
-      startTime,
-      endTime,
-      salt,
+    console.log(tokenType1, "tokenType1");
+    console.log(contractAddress1, "contractAddress1");
+    console.log(tokenId1, "tokenId1");
+    console.log(tokenType2, "tokenType2");
+    console.log(contractAddress2, "contractAddress2");
+    console.log(tokenId2, "tokenId2");
+    const { actions } = await seaport.createOrder({
       offer: [
         {
           itemType: tokenType1,
@@ -188,52 +167,55 @@ export const Request: React.FC = () => {
       ],
       consideration: [
         {
-          amount: ethers.utils.parseEther("1").toString(),
+          itemType: ItemType.ERC721,
+          token: nftContractAddress,
+          identifier: tokenId,
           recipient: account,
         },
       ],
     });
-
-    // console.log(actions, "actions");
-    // const approvalAction = actions[0] as any;
-    // console.log(actions[0]);
-    // await approvalAction.transactionMethods.transact();
-    // const createOrderAction = actions[1] as any;
-    // const order = await createOrderAction.createOrder();
-    // console.log(order, "order");
+    console.log(actions, "actions");
+    const approvalAction = actions[0] as any;
+    console.log(actions[0]);
+    await approvalAction.transactionMethods.transact();
+    const createOrderAction = actions[1] as any;
+    const order = await createOrderAction.createOrder();
 
     const buffer = Buffer.from(JSON.stringify(order));
     const cid = await ipfs.add(buffer);
-    setCid(cid.path);
-    console.log(cid);
+    sendMessage(ownerAddress, cid.path);
+
   };
 
   const connect = async () => {
     activate(injected);
   };
 
-  const sendMessage = async (ownerAddress: string) => {
-    await createOrder();
+  const sendMessage = async (ownerAddress: string, path: string) => {
     if (!account || !library) {
       console.log("error");
       return;
     }
     const signer = library.getSigner(account);
     const offerer = await Client.create(signer);
-    console.log(offerer, "offerer");
     const offererToOwner = await offerer.conversations.newConversation(
       ownerAddress
     );
-    console.log(offererToOwner, "offererToOwner");
     const stream = await offererToOwner.streamMessages();
 
     // TODO: Send Link of Seaport
     await offererToOwner.send("New offer !!");
-    const link = "https://otc-swap.vercel.app/fill/" + cid;
+    const link = "https://otc-swap.vercel.app/fill/" + path;
     await offererToOwner.send(link);
 
     const msg = await (await stream.next()).value;
     console.log(msg + "was sent to" + ownerAddress);
+
+    toast({
+      title: `Offer was sent to ${ownerAddress}, for more negotiations, visit https://www.daopanel.chat/`,
+      status: "success",
+      isClosable: true,
+    });
   };
 
   return (
@@ -323,18 +305,16 @@ export const Request: React.FC = () => {
                   Connect Wallet
                 </Button>
               ) : (
-                <Flex justify={"space-between"}>
                   <Button
                     width="100%"
                     marginRight={"2"}
                     fontSize={"sm"}
                     rounded="2xl"
-                    onClick={() => sendMessage(ownerAddress)}
+                      onClick={() => createOrder()}
+                      mt = "5"
                   >
                     Send Message
                   </Button>
-                  <Button onClick={createOrder}>Create Order</Button>
-                </Flex>
               )}
               {orderURI && (
                 <Link
@@ -369,9 +349,6 @@ export const Request: React.FC = () => {
               onClick={onCopy}
             />
           </Stack>
-          <Button width="100%" onClick={clear} fontSize={"sm"} rounded="2xl">
-            Create New Order
-          </Button>
         </Box>
       )}
     </Box>
