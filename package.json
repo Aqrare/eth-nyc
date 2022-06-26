@@ -1,0 +1,12 @@
+{
+  "name": "eth-nyc",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/Aqrare/eth-nyc.git",
+  "author": "aqrare <takumitakumi0310@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "canonicalize": "^1.0.8",
+    "ipfs-http-client": "^57.0.3"
+  }
+}

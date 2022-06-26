@@ -1,0 +1,9 @@
+{
+  "rinkeby": {
+    "chainId": 4,
+    "contracts": {
+      "kaguraswap": "0x3fE11c0CCD9897f6cfe990916208370d1b6f98D6"
+    },
+    "exproler": "https://rinkeby.etherscan.io/"
+  }
+}
