@@ -36,7 +36,7 @@ declare global {
 export const Request: React.FC = () => {
   const [assetURI, setAssetURI] = useState("");
   const [ownerAddress, setOwnerAddress] = useState(
-    "0x5442d67C172e7eE94b755B2E3CA3529805B1c607"
+    "0x231f0db1C13e176cfA1c98c713565F2E36bBA98e"
   );
   const [assetURIErrorMessage, setAssetURIErrorMessage] = useState("");
   const [network, setNetwork] = useState<Chain | "">("");
